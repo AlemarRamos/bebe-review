@@ -7,6 +7,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   signOut,
+  signInWithCredential,
+  GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { CloudStorageService, PERMANENT_ADMIN_EMAIL } from '../services/cloudStorage';
@@ -25,6 +27,7 @@ interface AuthContextType {
   openRegisterModal: () => void;
   closeAuthModal: () => void;
   loginWithGoogle: () => Promise<void>;
+  loginWithGoogleCredential: (idToken: string) => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -130,6 +133,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAuthModalOpen(false);
   };
 
+  const loginWithGoogleCredential = async (idToken: string) => {
+    const credential = GoogleAuthProvider.credential(idToken);
+    const result = await signInWithCredential(auth, credential);
+    if (result.user) {
+      await CloudStorageService.saveUserProfile(result.user);
+      setIsAdmin(CloudStorageService.checkAdminStatus(result.user));
+      await syncLocalDataToCloud(result.user);
+    }
+    setAuthModalOpen(false);
+  };
+
   const loginWithEmail = async (email: string, pass: string) => {
     const result = await signInWithEmailAndPassword(auth, email.trim(), pass);
     if (result.user) {
@@ -174,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         openRegisterModal,
         closeAuthModal,
         loginWithGoogle,
+        loginWithGoogleCredential,
         loginWithEmail,
         registerWithEmail,
         logout,
