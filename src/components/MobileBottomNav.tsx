@@ -1,5 +1,6 @@
 import React from 'react';
 import { BarChart3, PlayCircle, BookOpen, Bookmark, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface MobileBottomNavProps {
   activeTab: 'dashboard' | 'exam' | 'results' | 'study' | 'bookmarks' | 'admin';
@@ -14,6 +15,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   hasActiveExam,
   activeExamQuestionCount,
 }) => {
+  const { isAdmin } = useAuth();
   // During an active examination session, hide general tabs to avoid accidental abandonment,
   // or allow quick switching if the user wants to consult bookmarks
   if (activeTab === 'exam') {
@@ -45,7 +47,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     },
     {
       id: 'admin' as const,
-      label: 'TOS Matrix',
+      label: isAdmin ? 'Admin' : 'TOS Matrix',
       icon: ShieldCheck,
     },
   ];

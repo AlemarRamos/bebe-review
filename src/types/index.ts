@@ -183,3 +183,18 @@ export interface Bookmark {
   createdAt: string;
   notes?: string;
 }
+
+export type UserRole = 'admin' | 'student';
+
+export interface StudentRosterItem {
+  id: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  createdAt: string;
+  updatedAt: string;
+  totalAttempts?: number;
+  highestScore?: number;
+  latestScore?: number;
+  hasPassed?: boolean;
+}

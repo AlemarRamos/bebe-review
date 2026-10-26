@@ -1,29 +1,105 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NURSING_PRACTICES, SUBTOPIC_SPECIFICATIONS } from '../data/tableOfSpecifications';
 import { generateSqlSchema, downloadFile } from '../utils/exportSql';
 import { generateTosExam } from '../data/questionGenerator';
 import {
   ShieldCheck,
-  Download,
   Database,
   FileCode2,
   CheckCircle2,
   AlertCircle,
-  HelpCircle,
   Layers,
   FileSpreadsheet,
-  GraduationCap,
   ExternalLink,
-  Server,
-  Cloud,
+  Users,
+  Search,
+  Award,
+  Loader2,
+  RefreshCw,
+  Lock,
+  Eye,
+  TrendingUp,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { CloudStorageService, PERMANENT_ADMIN_EMAIL } from '../services/cloudStorage';
+import { StudentRosterItem } from '../types';
+import { StudentInspectionModal } from './StudentInspectionModal';
 
 export const AdminPanel: React.FC = () => {
+  const { user, isAdmin, openLoginModal } = useAuth();
+
+  // Active sub-navigation tab (Only 2 views: Student Roster and TOS Matrix)
+  const [activeSubTab, setActiveSubTab] = useState<'roster' | 'tos'>('roster');
+
+  // Student Roster & Cohort Analytics State
+  const [roster, setRoster] = useState<StudentRosterItem[]>([]);
+  const [loadingRoster, setLoadingRoster] = useState(false);
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterFilter, setRosterFilter] = useState<'all' | 'passed' | 'review'>('all');
+  const [inspectingStudent, setInspectingStudent] = useState<StudentRosterItem | null>(null);
+
+  // TOS Validation State
   const [validationResult, setValidationResult] = useState<{
     valid: boolean;
     total: number;
     messages: string[];
   } | null>(null);
+
+  // If user is not an admin, default to TOS view
+  useEffect(() => {
+    if (!isAdmin) {
+      setActiveSubTab('tos');
+    } else {
+      setActiveSubTab('roster');
+      loadCohortRoster();
+    }
+  }, [isAdmin, user]);
+
+  const loadCohortRoster = async () => {
+    setLoadingRoster(true);
+    try {
+      const data = await CloudStorageService.getStudentRoster();
+      setRoster(data);
+    } catch (err) {
+      console.error('Error fetching student roster:', err);
+    } finally {
+      setLoadingRoster(false);
+    }
+  };
+
+  // Cohort Analytics Calculations
+  const totalStudents = roster.length;
+  const activeExaminees = roster.filter((s) => (s.totalAttempts ?? 0) > 0);
+  const totalAttemptsAcrossCohort = roster.reduce((sum, s) => sum + (s.totalAttempts ?? 0), 0);
+  const averageHighestScore =
+    activeExaminees.length > 0
+      ? (
+          activeExaminees.reduce((sum, s) => sum + (s.highestScore ?? 0), 0) /
+          activeExaminees.length
+        ).toFixed(1)
+      : '0';
+  const passingRate =
+    activeExaminees.length > 0
+      ? (
+          (activeExaminees.filter((s) => s.hasPassed).length / activeExaminees.length) *
+          100
+        ).toFixed(1)
+      : '0';
+
+  // Filter student roster
+  const filteredRoster = roster.filter((student) => {
+    const query = rosterSearch.toLowerCase();
+    const matchesSearch =
+      student.displayName.toLowerCase().includes(query) ||
+      student.email.toLowerCase().includes(query);
+
+    if (!matchesSearch) return false;
+
+    if (rosterFilter === 'passed') return student.hasPassed;
+    if (rosterFilter === 'review') return !student.hasPassed && (student.totalAttempts ?? 0) > 0;
+
+    return true;
+  });
 
   // Validate Question Bank integrity according to TOS
   const handleRunValidation = () => {
@@ -63,14 +139,8 @@ export const AdminPanel: React.FC = () => {
         messages.push(`✓ ${sInfo.name}: exactly ${sInfo.itemCount} items (${sInfo.placementRange}).`);
       } else {
         valid = false;
-        messages.push(`✗ ${sInfo.name}: ${subCounts[sId] || 0}/${sInfo.itemCount} items.`);
+        messages.push(`✗ ${sInfo.name} mismatch: ${subCounts[sId] || 0}/${sInfo.itemCount}.`);
       }
-    }
-
-    // Check 4: Zero duplicates and 4 options
-    const idSet = new Set(questions.map((q) => q.id));
-    if (idSet.size === questions.length) {
-      messages.push('✓ Zero duplicate question IDs across the entire 500-question set.');
     }
 
     setValidationResult({
@@ -81,15 +151,15 @@ export const AdminPanel: React.FC = () => {
   };
 
   const handleDownloadSql = () => {
-    const schemaSql = generateSqlSchema();
-    downloadFile(schemaSql, 'nursing_preboard_tos_schema.sql', 'text/sql');
+    const sql = generateSqlSchema();
+    downloadFile(sql, 'phinma_nur225_pnle_preboard_xampp.sql', 'application/sql');
   };
 
   const handleDownloadCsv = () => {
     const questions = generateTosExam('full_500', 1);
     const headers = [
-      'Global Item #',
-      'NP Item #',
+      'Item No.',
+      'NP Placement',
       'Nursing Practice',
       'Subtopic',
       'Item Placement',
@@ -134,369 +204,475 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 sm:space-y-8 pb-28 md:pb-8">
-      {/* Title */}
+      {/* Title & Portal Header */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className="w-5 h-5 text-teal-700" />
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-              Table of Specification (TOS) & XAMPP Center
+              Administrator & TOS Center
             </h1>
+            {isAdmin && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
+                Administrator
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 font-medium">
-            PHINMA EDUCATION · FINAL EXAMINATION · NUR 225_099: NURSING SEMINAR 1
+            PHINMA EDUCATION · NUR 225_099: Nursing Seminar 1 · Candidate Performance & Roster Oversight
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleRunValidation}
-            className="px-4 py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Validate 500-Item TOS Bank</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Live Cloud Firestore Database Console Card */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-700/60 relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                Live Cloud Database
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Firestore Provisioned & Ready
-              </span>
-            </div>
-
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
-              <Database className="w-6 h-6 text-teal-400" />
-              <span>Google Cloud Firestore Console</span>
-            </h2>
-
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Inspect live student accounts, exam attempts, answer selections, and bookmarks stored in your provisioned Firebase database.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono pt-1 text-slate-300">
-              <div className="bg-slate-800/80 rounded-xl p-2.5 border border-slate-700">
-                <span className="text-slate-400 text-[10px] uppercase block font-sans font-bold">Project ID</span>
-                <span className="text-teal-300 truncate block">ai-studio-applet-webapp-13a5c</span>
-              </div>
-              <div className="bg-slate-800/80 rounded-xl p-2.5 border border-slate-700">
-                <span className="text-slate-400 text-[10px] uppercase block font-sans font-bold">Database ID</span>
-                <span className="text-teal-300 truncate block">ai-studio-pnlenursingprebo-990415bd-9582-49ba-ab64-f8b181dbc5cb</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
-            <a
-              href="https://console.firebase.google.com/project/ai-studio-applet-webapp-13a5c/firestore/databases/ai-studio-pnlenursingprebo-990415bd-9582-49ba-ab64-f8b181dbc5cb/data"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-3.5 text-xs sm:text-sm font-bold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-lg shadow-teal-900/30 transition-all flex items-center justify-center gap-2 cursor-pointer group"
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={loadCohortRoster}
+              className="px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Refresh Roster Data"
             >
-              <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              <span>Open Firestore Database Console</span>
-            </a>
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Refresh</span>
+            </button>
+          )}
 
-            <div className="text-[11px] text-slate-400 text-center lg:text-left">
-              Collections: <code className="text-teal-300">/users</code> · <code className="text-teal-300">attempts</code> · <code className="text-teal-300">bookmarks</code>
-            </div>
-          </div>
+          <a
+            href="https://console.firebase.google.com/project/ai-studio-applet-webapp-13a5c/firestore/databases/ai-studio-pnlenursingprebo-990415bd-9582-49ba-ab64-f8b181dbc5cb/data"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Database className="w-4 h-4" />
+            <span className="hidden sm:inline">Cloud Firestore DB</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
       </div>
 
-      {/* Validation Results */}
-      {validationResult && (
-        <div
-          className={`p-6 rounded-2xl border transition-all ${
-            validationResult.valid
-              ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950'
-              : 'bg-rose-50/70 border-rose-300 text-rose-950'
+      {/* Main Subnavigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-px">
+        <button
+          onClick={() => setActiveSubTab('roster')}
+          className={`py-3 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
+            activeSubTab === 'roster'
+              ? 'border-teal-700 text-teal-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <div className="flex items-center gap-2 mb-3 font-bold text-sm">
-            {validationResult.valid ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-700" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-rose-700" />
-            )}
-            <span>
-              {validationResult.valid
-                ? 'Table of Specifications Validation Passed (500 Items Verified)'
-                : 'Validation Discrepancies Detected'}
+          <Users className="w-4 h-4" />
+          <span>Student Candidate Roster & Scores</span>
+          {isAdmin && roster.length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-teal-100 text-teal-800">
+              {roster.length}
             </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('tos')}
+          className={`py-3 px-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 shrink-0 cursor-pointer ${
+            activeSubTab === 'tos'
+              ? 'border-teal-700 text-teal-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Table of Specifications Matrix & SQL</span>
+        </button>
+      </div>
+
+      {/* SUBTAB 1: Student Cohort & Exam Scores */}
+      {activeSubTab === 'roster' && (
+        <div className="space-y-6">
+          {!isAdmin ? (
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-4 max-w-xl mx-auto shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto border border-amber-200">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Administrator Access Restricted</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
+                  The candidate roster, student scorecards, category mastery breakdowns, and exam review sheets are reserved exclusively for the administrator.
+                </p>
+                <div className="mt-3 p-3 bg-slate-50 rounded-xl text-xs text-slate-600 border border-slate-200">
+                  System Administrator: <code className="font-bold text-teal-800">{PERMANENT_ADMIN_EMAIL}</code>
+                </div>
+              </div>
+              <button
+                onClick={openLoginModal}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl shadow-xs transition-colors"
+              >
+                Sign In With Admin Account
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Cohort Metric Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Registered Candidates
+                    </span>
+                    <Users className="w-4 h-4 text-teal-600" />
+                  </div>
+                  <div className="text-3xl font-extrabold text-slate-900 tabular-nums">
+                    {totalStudents}
+                  </div>
+                  <span className="text-xs text-slate-500 mt-1 block">
+                    {activeExaminees.length} have taken exams
+                  </span>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Total Exams Taken
+                    </span>
+                    <Award className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="text-3xl font-extrabold text-slate-900 tabular-nums">
+                    {totalAttemptsAcrossCohort}
+                  </div>
+                  <span className="text-xs text-slate-500 mt-1 block">
+                    Full pre-board & NP booklets
+                  </span>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Cohort Average Score
+                    </span>
+                    <TrendingUp className="w-4 h-4 text-teal-600" />
+                  </div>
+                  <div className="text-3xl font-extrabold text-teal-800 tabular-nums">
+                    {averageHighestScore}%
+                  </div>
+                  <span className="text-xs text-slate-500 mt-1 block">
+                    Benchmark passing: 75%
+                  </span>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Cohort Pass Rate
+                    </span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="text-3xl font-extrabold text-emerald-700 tabular-nums">
+                    {passingRate}%
+                  </div>
+                  <span className="text-xs text-slate-500 mt-1 block">
+                    {activeExaminees.filter((s) => s.hasPassed).length} of {activeExaminees.length} passed
+                  </span>
+                </div>
+              </div>
+
+              {/* Roster Controls: Search & Filter */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+                <div className="relative w-full sm:w-80">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search candidate name or student email..."
+                    value={rosterSearch}
+                    onChange={(e) => setRosterSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-600 bg-slate-50"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+                  <button
+                    onClick={() => setRosterFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                      rosterFilter === 'all'
+                        ? 'bg-teal-700 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    All Candidates ({roster.length})
+                  </button>
+
+                  <button
+                    onClick={() => setRosterFilter('passed')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                      rosterFilter === 'passed'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                    }`}
+                  >
+                    Passed (≥75%)
+                  </button>
+
+                  <button
+                    onClick={() => setRosterFilter('review')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                      rosterFilter === 'review'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+                    }`}
+                  >
+                    Needs Review (&lt;75%)
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Student Table */}
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                {loadingRoster ? (
+                  <div className="p-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+                    <span>Loading candidate cohort from Cloud Firestore...</span>
+                  </div>
+                ) : filteredRoster.length === 0 ? (
+                  <div className="p-12 text-center text-slate-500 text-xs space-y-2">
+                    <Users className="w-8 h-8 text-slate-300 mx-auto" />
+                    <p className="font-bold text-slate-700">No candidates found</p>
+                    <p className="text-slate-400">
+                      {rosterSearch
+                        ? 'No students matching your search criteria.'
+                        : 'No candidate accounts have been registered yet.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-4">Candidate Name</th>
+                          <th className="py-3 px-4">Student Email</th>
+                          <th className="py-3 px-4">Attempts</th>
+                          <th className="py-3 px-4">Highest Score</th>
+                          <th className="py-3 px-4">Latest Score</th>
+                          <th className="py-3 px-4">Cohort Status</th>
+                          <th className="py-3 px-4 text-right">Performance Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredRoster.map((student) => {
+                          const hasAttempts = (student.totalAttempts ?? 0) > 0;
+                          return (
+                            <tr key={student.id} className="hover:bg-slate-50/70 transition-colors">
+                              <td className="py-3 px-4 font-bold text-slate-900 flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold shrink-0">
+                                  {student.displayName.slice(0, 2).toUpperCase()}
+                                </div>
+                                <span className="truncate max-w-[160px]">{student.displayName}</span>
+                              </td>
+
+                              <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                                {student.email}
+                              </td>
+
+                              <td className="py-3 px-4 font-bold text-slate-900 tabular-nums">
+                                {student.totalAttempts || 0}
+                              </td>
+
+                              <td className="py-3 px-4 font-extrabold text-teal-800 tabular-nums">
+                                {hasAttempts ? `${(student.highestScore ?? 0).toFixed(1)}%` : '—'}
+                              </td>
+
+                              <td className="py-3 px-4 font-extrabold text-slate-800 tabular-nums">
+                                {hasAttempts ? `${(student.latestScore ?? 0).toFixed(1)}%` : '—'}
+                              </td>
+
+                              <td className="py-3 px-4">
+                                {hasAttempts ? (
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold ${
+                                      student.hasPassed
+                                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                        : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    }`}
+                                  >
+                                    {student.hasPassed ? (
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                    ) : (
+                                      <AlertCircle className="w-3 h-3 text-amber-600" />
+                                    )}
+                                    <span>{student.hasPassed ? 'Passed' : 'Needs Review'}</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400 font-medium">
+                                    No attempts yet
+                                  </span>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-4 text-right">
+                                <button
+                                  onClick={() => setInspectingStudent(student)}
+                                  className="px-3 py-1.5 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Inspect Breakdown</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* SUBTAB 2: Table of Specifications & SQL Export */}
+      {activeSubTab === 'tos' && (
+        <div className="space-y-6">
+          {/* Validation & Export Action Bar */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                TOS Curriculum Validator & Export
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Inspect official PHINMA NUR 225_099 question bank alignment across NP 1 through NP 5.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleRunValidation}
+                className="px-3.5 py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Validate 500 Items</span>
+              </button>
+              <button
+                onClick={handleDownloadSql}
+                className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileCode2 className="w-4 h-4 text-teal-600" />
+                <span>Export XAMPP SQL</span>
+              </button>
+              <button
+                onClick={handleDownloadCsv}
+                className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Export CSV</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            {validationResult.messages.map((msg, i) => (
-              <div key={i} className="flex items-start gap-1.5 font-medium">
-                <span>{msg}</span>
+          {/* Validation Results */}
+          {validationResult && (
+            <div
+              className={`p-6 rounded-2xl border transition-all ${
+                validationResult.valid
+                  ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950'
+                  : 'bg-rose-50/70 border-rose-300 text-rose-950'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-3 font-bold text-sm">
+                {validationResult.valid ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-rose-700" />
+                )}
+                <span>
+                  {validationResult.valid
+                    ? 'Table of Specifications Validation Passed (500 Items Verified)'
+                    : 'Validation Discrepancies Detected'}
+                </span>
               </div>
-            ))}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                {validationResult.messages.map((msg, i) => (
+                  <div key={i} className="flex items-start gap-1.5 font-medium">
+                    <span>{msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Official Table of Specification Table */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Official Table of Specifications Matrix (NUR 225_099)
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Full breakdown of 500 total multiple-choice items with specific question placement ranges.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4">Subject / Nursing Practice</th>
+                    <th className="py-3 px-4">Specific Subtopic Concept</th>
+                    <th className="py-3 px-4 text-center">TOS Placement</th>
+                    <th className="py-3 px-4 text-center">Items</th>
+                    <th className="py-3 px-4 text-right">Weight %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {Object.values(NURSING_PRACTICES).map((np) => {
+                    return np.subtopics.map((subId, subIdx) => {
+                      const sub = SUBTOPIC_SPECIFICATIONS[subId];
+                      return (
+                        <tr key={subId} className="hover:bg-slate-50/70 transition-colors">
+                          {subIdx === 0 ? (
+                            <td
+                              rowSpan={np.subtopics.length}
+                              className="py-3 px-4 font-bold align-top border-r border-slate-100"
+                            >
+                              <span
+                                className="px-2 py-0.5 rounded text-[11px] font-bold text-white inline-block mb-1"
+                                style={{ backgroundColor: np.color }}
+                              >
+                                {np.title}
+                              </span>
+                              <div className="text-slate-900">{np.shortTitle}</div>
+                              <div className="text-[10px] text-slate-400 font-normal">
+                                100 Items Total (20% weight)
+                              </div>
+                            </td>
+                          ) : null}
+
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-slate-900 block">{sub.name}</span>
+                            <span className="text-[11px] text-slate-500">{sub.description}</span>
+                          </td>
+
+                          <td className="py-3 px-4 text-center font-mono font-bold text-slate-800">
+                            {sub.placementRange}
+                          </td>
+
+                          <td className="py-3 px-4 text-center font-bold text-slate-900 tabular-nums">
+                            {sub.itemCount}
+                          </td>
+
+                          <td className="py-3 px-4 text-right font-bold text-teal-800 tabular-nums">
+                            {sub.percentage}%
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Official Table of Specification Table */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-          <div>
-            <div className="flex items-center gap-2">
-              <Layers className="w-5 h-5 text-teal-700" />
-              <h2 className="text-base font-bold text-slate-900">
-                Official Table of Specification Matrix
-              </h2>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Source: PHINMA EDUCATION · NUR 225_099: NURSING SEMINAR 1 · FINAL EXAMINATION
-            </p>
-          </div>
-          <div className="flex items-center gap-1 text-xs font-bold text-teal-700">
-            <GraduationCap className="w-4 h-4" />
-            <span>TOP THE BOARD EXAM!</span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-100/80 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-300">
-                <th className="py-3 px-4 border-r border-slate-200">CONTENT</th>
-                <th className="py-3 px-4 border-r border-slate-200">SUBTOPIC</th>
-                <th className="py-3 px-4 text-center border-r border-slate-200">TOTAL NUMBER OF ITEMS</th>
-                <th className="py-3 px-4 text-center border-r border-slate-200">PERCENTAGE</th>
-                <th className="py-3 px-4 text-center">ITEM PLACEMENT</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Nursing Practice 1 */}
-              <tr className="bg-orange-50/50 border-b border-orange-200 font-bold text-orange-950">
-                <td rowSpan={4} className="py-3 px-4 border-r border-orange-200 align-middle bg-orange-100/60 font-black">
-                  Nursing Practice 1
-                </td>
-                <td className="py-2.5 px-4 border-r border-orange-200">Fundamentals of Nursing Practice</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200 tabular-nums">15</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200">15%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">01 – 15</td>
-              </tr>
-              <tr className="bg-orange-50/50 border-b border-orange-200">
-                <td className="py-2.5 px-4 border-r border-orange-200">Community Health Nursing 1 (Individual & Family as Clients)</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200 tabular-nums">30</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200">30%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">16 – 45</td>
-              </tr>
-              <tr className="bg-orange-50/50 border-b border-orange-200">
-                <td className="py-2.5 px-4 border-r border-orange-200">Community Health Nursing 2 (Population Group & Community as Clients)</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200 tabular-nums">30</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200">30%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">46 – 75</td>
-              </tr>
-              <tr className="bg-orange-50/50 border-b-2 border-slate-300">
-                <td className="py-2.5 px-4 border-r border-orange-200">Communicable Diseases & IMCI</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-orange-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">75 – 100</td>
-              </tr>
-
-              {/* Nursing Practice 2 */}
-              <tr className="bg-amber-50/50 border-b border-amber-200 font-bold text-amber-950">
-                <td rowSpan={2} className="py-3 px-4 border-r border-amber-200 align-middle bg-amber-100/60 font-black">
-                  Nursing Practice 2
-                </td>
-                <td className="py-2.5 px-4 border-r border-amber-200">Care of Mother, Child, Adolescent (Well Clients)</td>
-                <td className="py-2.5 px-4 text-center border-r border-amber-200 tabular-nums">50</td>
-                <td className="py-2.5 px-4 text-center border-r border-amber-200">50%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">01 – 50</td>
-              </tr>
-              <tr className="bg-amber-50/50 border-b-2 border-slate-300 font-bold text-amber-950">
-                <td className="py-2.5 px-4 border-r border-amber-200">Care of Mother and Child at-Risk or with Problems (Acute and Chronic)</td>
-                <td className="py-2.5 px-4 text-center border-r border-amber-200 tabular-nums">50</td>
-                <td className="py-2.5 px-4 text-center border-r border-amber-200">50%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">51 – 100</td>
-              </tr>
-
-              {/* Nursing Practice 3 */}
-              <tr className="bg-emerald-50/40 border-b border-emerald-200 font-bold text-emerald-950">
-                <td rowSpan={4} className="py-3 px-4 border-r border-emerald-200 align-middle bg-emerald-100/50 font-black">
-                  Nursing Practice 3
-                </td>
-                <td className="py-2.5 px-4 border-r border-emerald-200">Care of Clients with Cardiologic Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">01 – 25</td>
-              </tr>
-              <tr className="bg-emerald-50/40 border-b border-emerald-200">
-                <td className="py-2.5 px-4 border-r border-emerald-200">Care of Clients with Respiratory Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">26 – 50</td>
-              </tr>
-              <tr className="bg-emerald-50/40 border-b border-emerald-200">
-                <td className="py-2.5 px-4 border-r border-emerald-200">Care of Clients with Hematologic Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">51 – 75</td>
-              </tr>
-              <tr className="bg-emerald-50/40 border-b-2 border-slate-300">
-                <td className="py-2.5 px-4 border-r border-emerald-200">Care of Clients with Endocrine Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-emerald-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">75 – 100</td>
-              </tr>
-
-              {/* Nursing Practice 4 */}
-              <tr className="bg-sky-50/40 border-b border-sky-200 font-bold text-sky-950">
-                <td rowSpan={5} className="py-3 px-4 border-r border-sky-200 align-middle bg-sky-100/50 font-black">
-                  Nursing Practice 4
-                </td>
-                <td className="py-2.5 px-4 border-r border-sky-200">Care of Clients with Neurologic Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">01 – 25</td>
-              </tr>
-              <tr className="bg-sky-50/40 border-b border-sky-200">
-                <td className="py-2.5 px-4 border-r border-sky-200">Perioperative Nursing</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200 tabular-nums">15</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200">15%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">26 – 40</td>
-              </tr>
-              <tr className="bg-sky-50/40 border-b border-sky-200">
-                <td className="py-2.5 px-4 border-r border-sky-200">Care of Clients with Inflammatory and Immunologic System Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200 tabular-nums">10</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200">10%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">41 – 50</td>
-              </tr>
-              <tr className="bg-sky-50/40 border-b border-sky-200">
-                <td className="py-2.5 px-4 border-r border-sky-200">Care of Clients with GIT & Hepatobiliary Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">51 – 75</td>
-              </tr>
-              <tr className="bg-sky-50/40 border-b-2 border-slate-300">
-                <td className="py-2.5 px-4 border-r border-sky-200">Care of Clients with FABS & GUT Problems</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-sky-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">75 – 100</td>
-              </tr>
-
-              {/* Nursing Practice 5 */}
-              <tr className="bg-purple-50/40 border-b border-purple-200 font-bold text-purple-950">
-                <td rowSpan={3} className="py-3 px-4 border-r border-purple-200 align-middle bg-purple-100/50 font-black">
-                  Nursing Practice 5
-                </td>
-                <td className="py-2.5 px-4 border-r border-purple-200">Special Senses</td>
-                <td className="py-2.5 px-4 text-center border-r border-purple-200 tabular-nums">25</td>
-                <td className="py-2.5 px-4 text-center border-r border-purple-200">25%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">01 – 25</td>
-              </tr>
-              <tr className="bg-purple-50/40 border-b border-purple-200">
-                <td className="py-2.5 px-4 border-r border-purple-200">Concepts of Mental Health in the Philippines</td>
-                <td className="py-2.5 px-4 text-center border-r border-purple-200 tabular-nums">20</td>
-                <td className="py-2.5 px-4 text-center border-r border-purple-200">20%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">26 – 45</td>
-              </tr>
-              <tr className="bg-purple-50/40 border-b border-purple-200 font-bold text-purple-950">
-                <td className="py-2.5 px-4 border-r border-purple-200">Psychiatric and Mental Health Nursing</td>
-                <td className="py-2.5 px-4 text-center border-r border-purple-200 tabular-nums">55</td>
-                <td className="py-2.5 px-4 text-center border-r border-purple-200">55%</td>
-                <td className="py-2.5 px-4 text-center tabular-nums">46 – 100</td>
-              </tr>
-
-              {/* Grand Total Row */}
-              <tr className="bg-slate-900 text-white font-black text-sm">
-                <td colSpan={2} className="py-3 px-4 text-right">
-                  TOTAL PRE-BOARD EXAMINATION ITEMS:
-                </td>
-                <td className="py-3 px-4 text-center tabular-nums">500</td>
-                <td className="py-3 px-4 text-center">100%</td>
-                <td className="py-3 px-4 text-center tabular-nums">Items 001 – 500</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* XAMPP / PHP / MySQL Deliverables Center */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-6">
-        <div className="flex items-center gap-2">
-          <Database className="w-5 h-5 text-teal-700" />
-          <h2 className="text-base font-bold text-slate-900">
-            Export Local Deployment Package (XAMPP / MySQL / phpMyAdmin)
-          </h2>
-        </div>
-
-        <p className="text-xs text-slate-600 leading-relaxed">
-          The prompt specifies local execution on XAMPP (Apache, PHP 8, MySQL/phpMyAdmin). You can download the complete SQL schema and verified question datasets below to import directly into your local database.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50 flex flex-col justify-between">
-            <div>
-              <div className="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center text-teal-800 mb-2">
-                <FileCode2 className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">
-                schema.sql (11 Production Tables)
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Contains complete DDL for users, subjects, topics, concepts, questions, question_variants, examination_attempts, attempt_questions, bookmarks, and audit_logs.
-              </p>
-            </div>
-            <button
-              onClick={handleDownloadSql}
-              className="mt-4 w-full py-2 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download nursing_preboard_tos_schema.sql</span>
-            </button>
-          </div>
-
-          <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50 flex flex-col justify-between">
-            <div>
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 mb-2">
-                <FileSpreadsheet className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900">
-                phinma_nur225_500_tos_questions.csv
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Complete spreadsheet containing all 500 validated question records, answer keys, educational rationales, and textbook citations formatted for phpMyAdmin import.
-              </p>
-            </div>
-            <button
-              onClick={handleDownloadCsv}
-              className="mt-4 w-full py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download phinma_nur225_500_tos_questions.csv</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-3">
-          <h4 className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
-            <HelpCircle className="w-4 h-4 text-teal-700" />
-            <span>XAMPP Localhost Setup Instructions:</span>
-          </h4>
-          <ol className="list-decimal pl-5 space-y-1.5 text-slate-700 leading-relaxed">
-            <li>Download and install <strong>XAMPP</strong> with PHP 8.x and MySQL enabled.</li>
-            <li>Start the <strong>Apache</strong> and <strong>MySQL</strong> modules in the XAMPP Control Panel.</li>
-            <li>Open your browser and navigate to <code>http://localhost/phpmyadmin/</code>.</li>
-            <li>Click on the <strong>Import</strong> tab and upload the downloaded <code>nursing_preboard_tos_schema.sql</code> file.</li>
-            <li>Place the project files inside your XAMPP web root directory: <code>C:\xampp\htdocs\nursing-preboard\</code>.</li>
-            <li>Access the examination system in your browser at <code>http://localhost/nursing-preboard/</code>.</li>
-          </ol>
-        </div>
-      </div>
+      {/* Student Deep-Dive Inspection Modal */}
+      {inspectingStudent && (
+        <StudentInspectionModal
+          student={inspectingStudent}
+          onClose={() => setInspectingStudent(null)}
+        />
+      )}
     </div>
   );
 };

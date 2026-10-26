@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   hasActiveExam,
   activeExamQuestionCount,
 }) => {
-  const { user, openLoginModal, openRegisterModal, logout, isSyncing } = useAuth();
+  const { user, openLoginModal, openRegisterModal, logout, isSyncing, isAdmin } = useAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const getInitials = (name?: string | null, email?: string | null) => {
@@ -120,7 +120,10 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>TOS Matrix</span>
+              <span>{isAdmin ? 'Admin & Scores' : 'TOS Matrix'}</span>
+              {isAdmin && (
+                <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse ml-0.5" title="Administrator Access Active" />
+              )}
             </button>
           </nav>
 
@@ -196,6 +199,12 @@ export const Header: React.FC<HeaderProps> = ({
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Cloud Data Loss Guard Active</span>
                       </div>
+                      {isAdmin && (
+                        <div className="mt-1.5 pt-1.5 border-t border-slate-200 flex items-center gap-1.5 text-[11px] font-bold text-teal-800">
+                          <ShieldCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                          <span>Administrator</span>
+                        </div>
+                      )}
                     </div>
 
                     <button

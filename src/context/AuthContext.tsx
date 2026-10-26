@@ -9,12 +9,13 @@ import {
   signOut,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
-import { CloudStorageService } from '../services/cloudStorage';
+import { CloudStorageService, PERMANENT_ADMIN_EMAIL } from '../services/cloudStorage';
 import { StorageService } from '../utils/storage';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   isSyncing: boolean;
   syncNotice: string | null;
   dismissSyncNotice: () => void;
@@ -34,6 +35,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
@@ -108,7 +110,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentUser);
       setLoading(false);
       if (currentUser) {
+        setIsAdmin(CloudStorageService.checkAdminStatus(currentUser));
         await syncLocalDataToCloud(currentUser);
+      } else {
+        setIsAdmin(false);
       }
     });
 
@@ -119,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
       await CloudStorageService.saveUserProfile(result.user);
+      setIsAdmin(CloudStorageService.checkAdminStatus(result.user));
       await syncLocalDataToCloud(result.user);
     }
     setAuthModalOpen(false);
@@ -128,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const result = await signInWithEmailAndPassword(auth, email.trim(), pass);
     if (result.user) {
       await CloudStorageService.saveUserProfile(result.user);
+      setIsAdmin(CloudStorageService.checkAdminStatus(result.user));
       await syncLocalDataToCloud(result.user);
     }
     setAuthModalOpen(false);
@@ -140,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         displayName: displayName.trim() || 'BSN Student',
       });
       await CloudStorageService.saveUserProfile(result.user, displayName.trim());
+      setIsAdmin(CloudStorageService.checkAdminStatus(result.user));
       await syncLocalDataToCloud(result.user);
     }
     setAuthModalOpen(false);
@@ -147,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await signOut(auth);
+    setIsAdmin(false);
     setSyncNotice(null);
   };
 
@@ -155,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
+        isAdmin,
         isSyncing,
         syncNotice,
         dismissSyncNotice,

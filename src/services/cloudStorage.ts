@@ -9,7 +9,9 @@ import {
 } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { ExamAttempt, Bookmark } from '../types';
+import { ExamAttempt, Bookmark, StudentRosterItem } from '../types';
+
+export const PERMANENT_ADMIN_EMAIL = 'alemarramos070624@gmail.com';
 
 export interface UserProfileData {
   id: string;
@@ -261,6 +263,95 @@ export const CloudStorageService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, `users/${userId}/bookmarks`);
       return [];
+    }
+  },
+
+  /**
+   * Check whether authenticated user is the system administrator
+   */
+  checkAdminStatus(user: User | null): boolean {
+    if (!user || !user.email) return false;
+    return user.email.toLowerCase() === PERMANENT_ADMIN_EMAIL.toLowerCase();
+  },
+
+  /**
+   * Fetch full student roster with cohort progress statistics
+   */
+  async getStudentRoster(): Promise<StudentRosterItem[]> {
+    const usersRef = collection(db, 'users');
+    try {
+      const snap = await getDocs(usersRef);
+      const roster: StudentRosterItem[] = [];
+
+      for (const userDoc of snap.docs) {
+        const u = userDoc.data();
+        const studentId = userDoc.id;
+
+        // Fetch student attempts to compute performance summary
+        let totalAttempts = 0;
+        let highestScore = 0;
+        let latestScore = 0;
+        let hasPassed = false;
+
+        try {
+          const attemptsSnap = await getDocs(collection(db, 'users', studentId, 'attempts'));
+          const attempts: any[] = [];
+          attemptsSnap.forEach((att) => attempts.push(att.data()));
+
+          const submitted = attempts.filter((a) => a.status === 'submitted');
+          totalAttempts = submitted.length;
+
+          if (submitted.length > 0) {
+            // Sort by submittedAt / startedAt descending
+            submitted.sort(
+              (a, b) =>
+                new Date(b.submittedAt || b.startedAt).getTime() -
+                new Date(a.submittedAt || a.startedAt).getTime()
+            );
+
+            latestScore = submitted[0].percentage ?? 0;
+            highestScore = submitted.reduce(
+              (max, cur) => Math.max(max, cur.percentage ?? 0),
+              0
+            );
+            hasPassed = highestScore >= 75;
+          }
+        } catch (attErr) {
+          console.warn(`Could not fetch attempts for student ${studentId}:`, attErr);
+        }
+
+        roster.push({
+          id: studentId,
+          email: u.email || 'No email',
+          displayName: u.displayName || 'BSN Candidate',
+          photoURL: u.photoURL,
+          createdAt: u.createdAt || new Date().toISOString(),
+          updatedAt: u.updatedAt || new Date().toISOString(),
+          totalAttempts,
+          highestScore,
+          latestScore,
+          hasPassed,
+        });
+      }
+
+      return roster.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'users');
+      return [];
+    }
+  },
+
+  /**
+   * Delete a student profile (Super admin)
+   */
+  async deleteStudent(studentId: string): Promise<void> {
+    const userRef = doc(db, 'users', studentId);
+    try {
+      await deleteDoc(userRef);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `users/${studentId}`);
     }
   },
 };

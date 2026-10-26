@@ -9,7 +9,7 @@ service cloud.firestore {
 
     // Hardened Global Security Helpers
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.\\@]+$');
     }
 
     function incoming() {
@@ -24,8 +24,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Role 1: Student (Owner of their own records)
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Role 2: Admin (System Administrator)
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'alemarramos070624@gmail.com';
     }
 
     function isValidUserProfile(data, userId) {
@@ -88,9 +94,11 @@ service cloud.firestore {
 
     // 1. User Profiles Collection
     match /users/{userId} {
-      allow get: if isOwner(userId) && isValidId(userId);
-      // No blanket list of all users
-      allow list: if false;
+      // Students view their own profile; Admin can inspect any student profile
+      allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+
+      // Only Admin can list the full student roster
+      allow list: if isAdmin();
 
       allow create: if isOwner(userId) &&
                        isValidId(userId) &&
@@ -104,12 +112,13 @@ service cloud.firestore {
                        incoming().createdAt == existing().createdAt &&
                        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
 
-      allow delete: if isOwner(userId) && isValidId(userId);
+      allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId);
 
       // 2. Exam Attempts Subcollection
       match /attempts/{attemptId} {
-        allow get: if isOwner(userId) && isValidId(userId) && isValidId(attemptId);
-        allow list: if isOwner(userId) && isValidId(userId);
+        // Students view own attempts; Admin can inspect attempt scores and answers
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(attemptId);
+        allow list: if (isOwner(userId) || isAdmin()) && isValidId(userId);
 
         allow create: if isOwner(userId) &&
                          isValidId(userId) &&
@@ -133,13 +142,13 @@ service cloud.firestore {
                            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'submittedAt', 'rawScore', 'percentage', 'passedBenchmark', 'userAnswers', 'flaggedQuestions', 'timeRemainingSeconds', 'updatedAt'])
                          );
 
-        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(attemptId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(attemptId);
       }
 
       // 3. Question Bookmarks Subcollection
       match /bookmarks/{bookmarkId} {
-        allow get: if isOwner(userId) && isValidId(userId) && isValidId(bookmarkId);
-        allow list: if isOwner(userId) && isValidId(userId);
+        allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(bookmarkId);
+        allow list: if (isOwner(userId) || isAdmin()) && isValidId(userId);
 
         allow create: if isOwner(userId) &&
                          isValidId(userId) &&
@@ -156,7 +165,7 @@ service cloud.firestore {
                          incoming().createdAt == existing().createdAt &&
                          incoming().diff(existing()).affectedKeys().hasOnly(['notes']);
 
-        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(bookmarkId);
+        allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId) && isValidId(bookmarkId);
       }
     }
   }
