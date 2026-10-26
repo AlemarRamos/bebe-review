@@ -1,0 +1,6 @@
+{
+  "name": "PNLE Nursing Pre-Board Examination Practice System",
+  "description": "Comprehensive 500-item pre-board examination practice system for Philippine Nurse Licensure Examination (PNLE) candidates, featuring full blueprint coverage, real-time timer, navigator, automatic scoring, detailed rationales, and variant retake engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

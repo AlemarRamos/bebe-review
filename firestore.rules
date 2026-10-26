@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Security Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['id', 'email', 'displayName', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly(['id', 'email', 'displayName', 'photoURL', 'createdAt', 'updatedAt']) &&
+             data.id == userId &&
+             data.id == request.auth.uid &&
+             data.email is string &&
+             data.email.size() <= 255 &&
+             data.displayName is string &&
+             data.displayName.size() >= 1 &&
+             data.displayName.size() <= 128 &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1024)) &&
+             data.createdAt is string &&
+             data.createdAt.size() <= 64 &&
+             data.updatedAt is string &&
+             data.updatedAt.size() <= 64;
+    }
+
+    function isValidExamAttempt(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'examMode', 'examTitle', 'status', 'startedAt']) &&
+             data.keys().hasOnly(['id', 'userId', 'attemptNumber', 'studentName', 'totalQuestions', 'examMode', 'examTitle', 'timeAllocatedSeconds', 'timeRemainingSeconds', 'startedAt', 'submittedAt', 'status', 'rawScore', 'percentage', 'passedBenchmark', 'userAnswers', 'flaggedQuestions', 'updatedAt']) &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.id is string &&
+             data.id.size() <= 128 &&
+             data.examMode in ['full_500', 'np1', 'np2', 'np3', 'np4', 'np5'] &&
+             data.examTitle is string &&
+             data.examTitle.size() <= 128 &&
+             data.status in ['in_progress', 'submitted'] &&
+             data.startedAt is string &&
+             data.startedAt.size() <= 64 &&
+             (!('submittedAt' in data) || data.submittedAt == null || (data.submittedAt is string && data.submittedAt.size() <= 64)) &&
+             (!('studentName' in data) || (data.studentName is string && data.studentName.size() <= 128)) &&
+             (!('attemptNumber' in data) || data.attemptNumber is number) &&
+             (!('totalQuestions' in data) || data.totalQuestions is number) &&
+             (!('timeAllocatedSeconds' in data) || data.timeAllocatedSeconds is number) &&
+             (!('timeRemainingSeconds' in data) || data.timeRemainingSeconds is number) &&
+             (!('rawScore' in data) || data.rawScore is number) &&
+             (!('percentage' in data) || data.percentage is number) &&
+             (!('passedBenchmark' in data) || data.passedBenchmark is bool) &&
+             (!('userAnswers' in data) || data.userAnswers is map) &&
+             (!('flaggedQuestions' in data) || data.flaggedQuestions is map) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidBookmark(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'questionId', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'userId', 'questionId', 'createdAt', 'notes']) &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.id is string &&
+             data.id.size() <= 128 &&
+             data.questionId is string &&
+             data.questionId.size() <= 64 &&
+             data.createdAt is string &&
+             data.createdAt.size() <= 64 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 500));
+    }
+
+    // 1. User Profiles Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      // No blanket list of all users
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().id == existing().id &&
+                       incoming().email == existing().email &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // 2. Exam Attempts Subcollection
+      match /attempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(attemptId);
+        allow list: if isOwner(userId) && isValidId(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(attemptId) &&
+                         isValidExamAttempt(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(attemptId) &&
+                         isValidExamAttempt(incoming(), userId) &&
+                         incoming().id == existing().id &&
+                         incoming().userId == existing().userId &&
+                         incoming().startedAt == existing().startedAt &&
+                         incoming().examMode == existing().examMode &&
+                         // Status lock: Cannot revert submitted back to in_progress
+                         !(existing().status == 'submitted' && incoming().status == 'in_progress') &&
+                         (
+                           // Action: Auto-save progress during active exam
+                           incoming().diff(existing()).affectedKeys().hasOnly(['userAnswers', 'flaggedQuestions', 'timeRemainingSeconds', 'updatedAt']) ||
+                           // Action: Final submit of exam with score calculations
+                           incoming().diff(existing()).affectedKeys().hasOnly(['status', 'submittedAt', 'rawScore', 'percentage', 'passedBenchmark', 'userAnswers', 'flaggedQuestions', 'timeRemainingSeconds', 'updatedAt'])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(attemptId);
+      }
+
+      // 3. Question Bookmarks Subcollection
+      match /bookmarks/{bookmarkId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(bookmarkId);
+        allow list: if isOwner(userId) && isValidId(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(bookmarkId) &&
+                         isValidBookmark(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(bookmarkId) &&
+                         isValidBookmark(incoming(), userId) &&
+                         incoming().id == existing().id &&
+                         incoming().userId == existing().userId &&
+                         incoming().questionId == existing().questionId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['notes']);
+
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(bookmarkId);
+      }
+    }
+  }
+}

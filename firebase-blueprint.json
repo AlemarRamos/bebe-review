@@ -1,0 +1,178 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile data for registered nursing students",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "User unique identifier matching auth UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Registered email address of the student",
+          "maxLength": 255
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full name or student nickname",
+          "maxLength": 128
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile avatar URL",
+          "maxLength": 1024
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the account was registered",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the profile was last updated",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "email", "displayName", "createdAt", "updatedAt"]
+    },
+    "ExamAttempt": {
+      "title": "ExamAttempt",
+      "description": "Saved examination attempts and scores for student",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the exam attempt",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner student user ID",
+          "maxLength": 128
+        },
+        "attemptNumber": {
+          "type": "number",
+          "description": "Sequential attempt number"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Student name at time of attempt",
+          "maxLength": 128
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Number of questions in attempt"
+        },
+        "examMode": {
+          "type": "string",
+          "description": "Exam mode (full_500 or np1-np5)",
+          "maxLength": 32
+        },
+        "examTitle": {
+          "type": "string",
+          "description": "Exam title or booklet name",
+          "maxLength": 128
+        },
+        "timeAllocatedSeconds": {
+          "type": "number",
+          "description": "Total allocated exam time in seconds"
+        },
+        "timeRemainingSeconds": {
+          "type": "number",
+          "description": "Remaining timer value in seconds"
+        },
+        "startedAt": {
+          "type": "string",
+          "description": "Timestamp when the exam started",
+          "maxLength": 64
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp when the exam was submitted or null if ongoing",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the exam: in_progress or submitted",
+          "maxLength": 32
+        },
+        "rawScore": {
+          "type": "number",
+          "description": "Calculated raw score"
+        },
+        "percentage": {
+          "type": "number",
+          "description": "Score percentage"
+        },
+        "passedBenchmark": {
+          "type": "boolean",
+          "description": "Whether passing benchmark was achieved"
+        },
+        "userAnswers": {
+          "type": "object",
+          "description": "Map of item index to chosen answer A, B, C, D"
+        },
+        "flaggedQuestions": {
+          "type": "object",
+          "description": "Map of item index to flagged boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last auto-save",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "userId", "examMode", "examTitle", "status", "startedAt"]
+    },
+    "UserBookmark": {
+      "title": "UserBookmark",
+      "description": "Bookmarked practice questions for quick review",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the bookmark",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner student user ID",
+          "maxLength": 128
+        },
+        "questionId": {
+          "type": "string",
+          "description": "Referenced test bank question ID",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp bookmark was created",
+          "maxLength": 64
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or mnemonic",
+          "maxLength": 500
+        }
+      },
+      "required": ["id", "userId", "questionId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Student profile document storing account settings and sync meta"
+    },
+    "/users/{userId}/attempts/{attemptId}": {
+      "schema": "ExamAttempt",
+      "description": "Subcollection of exam attempts taken by the student"
+    },
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": "UserBookmark",
+      "description": "Subcollection of questions bookmarked by the student"
+    }
+  }
+}

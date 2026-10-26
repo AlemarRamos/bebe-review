@@ -1,0 +1,1122 @@
+# MASTER PROMPT: FULLY FUNCTIONAL NURSING PRE-BOARD EXAMINATION PRACTICE SYSTEM
+
+## 1. PROJECT OVERVIEW
+
+Create a complete, fully functional Nursing Pre-Board Examination Practice System designed for BS Nursing students preparing for the Philippine Nurse Licensure Examination (PNLE).
+
+The system must provide a realistic, comprehensive nursing pre-board examination consisting of **EXACTLY 500 multiple-choice questions per examination attempt**.
+
+The system must be a real, working application, not merely a UI prototype, static webpage, or demonstration. Every button, question, answer selection, timer, score calculation, results page, and retake function must work correctly.
+
+The application must be easy to use, responsive, organized, fast, accessible, and comfortable to look at during long examination sessions.
+
+### Primary objectives
+
+1. Provide exactly 500 questions in every complete examination.
+2. Cover all major PNLE nursing subject areas and their relevant lessons.
+3. Allow students to select and change answers before submission.
+4. Include a countdown timer and examination progress tracker.
+5. Automatically calculate the student's score after submission.
+6. Display correct answers, incorrect answers, explanations, and performance statistics.
+7. Provide a Retake Examination button.
+8. On retake, generate a different set of questions testing the same learning objectives and concepts as the previous examination.
+9. Prevent duplicate questions within a single attempt.
+10. Save examination results and allow students to review previous attempts.
+11. Include a complete, organized question bank that can be expanded without modifying the core application.
+12. Ensure all scoring, answer keys, and examination logic work correctly.
+
+## 2. RECOMMENDED TECHNOLOGY STACK
+
+Use the following stack for a locally runnable application:
+
+- Frontend: HTML5, CSS3, JavaScript, and Bootstrap 5.
+- Backend: PHP 8 or a compatible PHP 8.x version.
+- Database: MySQL or MariaDB.
+- Local development environment: XAMPP.
+- Database management: phpMyAdmin.
+- Charts: Chart.js.
+- Icons: Bootstrap Icons.
+- Font: Inter, system sans-serif, or another readable font.
+
+The application must run locally through a URL such as:
+
+`http://localhost/nursing-preboard/`
+
+Organize the complete source code inside the XAMPP `htdocs` directory.
+
+Use PHP sessions for authentication, PDO prepared statements for database operations, password hashing for user passwords, server-side validation, and appropriate security protections.
+
+Do not require paid APIs, paid services, or an internet connection for core examination functions. Bundle or locally host any essential frontend dependencies where practical.
+
+## 3. EXAMINATION STRUCTURE: EXACTLY 500 ITEMS
+
+Every full examination attempt must contain exactly 500 numbered multiple-choice questions.
+
+Each question must have four answer choices:
+
+- A
+- B
+- C
+- D
+
+Each question must have exactly one intended best answer, supported by a verified answer key and an educational rationale.
+
+The examination must never accidentally display fewer or more than 500 questions.
+
+### Examination rules
+
+- Total questions: 500.
+- Default score per question: 1 point.
+- Maximum raw score: 500 points.
+- Passing threshold for practice purposes: configurable by the administrator.
+- Default practice benchmark: 75%, clearly labeled as a practice benchmark rather than an official PNLE passing determination.
+- Default duration: configurable, initially set to 600 minutes for a long-form practice simulation.
+- Timer behavior: save remaining time and prevent ordinary page refreshes from resetting the examination.
+- Answers must persist while the student navigates between questions.
+- Unanswered questions must be clearly identified.
+- Students must be able to return to previous questions before submitting.
+- Display a confirmation dialog before final submission.
+- When the timer reaches zero, automatically submit the current attempt.
+- Once submitted, lock the attempt against further answer changes.
+
+Allow two navigation modes:
+
+1. **Sequential Mode:** Move through questions using Previous and Next buttons.
+2. **Question Navigator:** Jump directly to any of the 500 questions using a numbered question grid.
+
+The student must be able to see which questions are answered, unanswered, flagged for review, or currently selected.
+
+## 4. COMPLETE NURSING SUBJECT COVERAGE
+
+Build a comprehensive question bank organized according to the major subject areas and learning objectives of the Philippine Nurse Licensure Examination.
+
+Use the current official Professional Regulation Commission (PRC) and Board of Nursing examination framework as the primary reference for organizing coverage. Verify the latest publicly available examination syllabus or Table of Specifications before finalizing the subject distribution.
+
+Do not claim that the system reproduces confidential, actual, or guaranteed future board examination questions.
+
+Include the following subject areas and lessons.
+
+### SUBJECT 1: FUNDAMENTALS OF NURSING
+
+Cover:
+
+- Nursing history, theories, and theoretical frameworks.
+- Roles, responsibilities, and scope of nursing practice.
+- Nursing process: assessment, nursing diagnosis, planning, implementation, and evaluation.
+- Nursing care plans and measurable nursing outcomes.
+- Clinical judgment and evidence-based nursing practice.
+- Patient identification and patient safety.
+- Vital signs and normal variations across age groups.
+- Physical assessment and health history.
+- Medical terminology and common abbreviations.
+- Hygiene, bathing, grooming, and oral care.
+- Bed making and patient positioning.
+- Mobility, ambulation, transfers, and range-of-motion exercises.
+- Body mechanics and prevention of injury.
+- Pressure injury prevention and wound care.
+- Aseptic technique and sterile technique.
+- Standard and transmission-based precautions.
+- Hand hygiene and personal protective equipment.
+- Infection prevention and control.
+- Specimen collection and handling.
+- Urinary catheterization and catheter care.
+- Bowel elimination and ostomy care.
+- Oxygen administration and basic respiratory support.
+- Suctioning and airway management principles.
+- Nutrition, hydration, and feeding assistance.
+- Enteral feeding and aspiration prevention.
+- Fluid balance, intake and output, and daily weights.
+- Sleep, comfort, pain assessment, and pain management.
+- Fall prevention and restraint safety.
+- Medication administration rights and medication safety.
+- Oral, topical, intradermal, subcutaneous, intramuscular, and intravenous medication principles.
+- Dosage calculations, conversions, infusion rates, and weight-based calculations.
+- Blood transfusion safety and reaction recognition.
+- Intravenous therapy and complications.
+- Preoperative and postoperative nursing care.
+- Documentation, incident reporting, and handoff communication.
+- Patient education and discharge planning.
+- Therapeutic communication and interpersonal relationships.
+- Nursing ethics, accountability, confidentiality, and informed consent.
+- Basic emergency response, first aid, and CPR principles.
+
+### SUBJECT 2: COMMUNITY HEALTH NURSING
+
+Cover:
+
+- Concepts, principles, and philosophy of community health nursing.
+- Public health nursing roles and responsibilities.
+- Primary health care and universal health coverage.
+- Community assessment, diagnosis, planning, implementation, and evaluation.
+- Family assessment and family nursing care plans.
+- Home visits and bag technique.
+- Community organizing and participation.
+- Health promotion and disease prevention.
+- Levels of prevention.
+- Epidemiology and disease surveillance.
+- Incidence, prevalence, morbidity, and mortality.
+- Epidemiologic investigations and outbreak control.
+- Communicable disease prevention and control.
+- Tuberculosis, dengue, malaria, HIV, and other relevant infectious diseases.
+- Immunization principles and the Philippine immunization program.
+- Cold chain management and vaccine safety.
+- Maternal, newborn, child, adolescent, and reproductive health programs.
+- Family planning and responsible parenthood.
+- Nutrition programs and malnutrition prevention.
+- Environmental sanitation, safe water, and waste disposal.
+- Food safety and environmental health.
+- Occupational health and school health nursing.
+- Health education, communication, and behavioral change.
+- Disaster preparedness, triage, emergency response, and rehabilitation.
+- Community-based rehabilitation.
+- Primary care referral systems.
+- Health indicators, vital statistics, and demographic data.
+- Philippine health policies and relevant public health laws.
+- The roles of the Department of Health, local government units, and community health workers.
+- Community health nursing research and program evaluation.
+
+### SUBJECT 3: MATERNAL AND CHILD HEALTH NURSING
+
+#### Maternal and reproductive nursing
+
+Cover:
+
+- Female reproductive anatomy and physiology.
+- Menstrual cycle and reproductive health.
+- Fertilization, implantation, and fetal development.
+- Signs of pregnancy and pregnancy dating.
+- Estimated date of delivery calculations.
+- Prenatal assessment and antenatal care.
+- Maternal nutrition and pregnancy discomforts.
+- Physiological changes during pregnancy.
+- High-risk pregnancy and maternal warning signs.
+- Gestational hypertension, preeclampsia, and eclampsia.
+- Gestational diabetes and other medical complications.
+- Placenta previa and placental abruption.
+- Ectopic pregnancy and miscarriage.
+- Preterm labor and premature rupture of membranes.
+- Rh incompatibility and maternal-fetal concerns.
+- Stages and mechanisms of labor.
+- Fetal heart rate monitoring.
+- Labor assessment and pain management.
+- Obstetric emergencies.
+- Cesarean birth and operative delivery.
+- Immediate postpartum care and postpartum assessment.
+- Postpartum hemorrhage and infection.
+- Breastfeeding and lactation management.
+- Family planning and contraception.
+- Reproductive health counseling.
+- Maternal mental health and postpartum depression.
+
+#### Newborn nursing
+
+Cover:
+
+- Immediate newborn care and essential newborn care.
+- APGAR scoring.
+- Newborn physical assessment.
+- Thermoregulation and prevention of hypothermia.
+- Neonatal resuscitation principles.
+- Breastfeeding initiation and newborn nutrition.
+- Jaundice and hyperbilirubinemia.
+- Hypoglycemia and respiratory distress.
+- Prematurity and low birth weight.
+- Neonatal infection and congenital abnormalities.
+- Newborn screening and immunization.
+- Safe sleep and prevention of newborn injury.
+
+#### Pediatric nursing
+
+Cover:
+
+- Growth and development from infancy through adolescence.
+- Developmental milestones and developmental theories.
+- Pediatric assessment and communication.
+- Pediatric medication and dosage calculations.
+- Nutrition and feeding across age groups.
+- Childhood immunization.
+- Congenital and acquired disorders.
+- Pediatric respiratory, cardiac, gastrointestinal, renal, neurological, and endocrine disorders.
+- Childhood infections and communicable diseases.
+- Dehydration and fluid-electrolyte imbalance.
+- Pediatric emergency management.
+- Childhood cancer and hematologic disorders.
+- Congenital heart disease.
+- Seizures and neurological emergencies.
+- Child safety, accident prevention, and injury management.
+- Pediatric pain assessment.
+- Family-centered care.
+- Child protection, neglect recognition, and safeguarding.
+- Hospitalized child coping and play therapy.
+
+### SUBJECT 4: MEDICAL-SURGICAL NURSING
+
+#### Cardiovascular nursing
+
+- Cardiovascular anatomy and physiology.
+- Hypertension and hypertensive emergencies.
+- Coronary artery disease and angina.
+- Myocardial infarction.
+- Heart failure and pulmonary edema.
+- Dysrhythmias and ECG interpretation.
+- Valvular disorders.
+- Cardiomyopathy and inflammatory cardiac disorders.
+- Peripheral arterial and venous disorders.
+- Deep vein thrombosis and pulmonary embolism.
+- Shock and hemodynamic monitoring.
+- Cardiac medications and anticoagulant safety.
+- Pacemakers and cardiovascular procedures.
+- Post-cardiac surgery nursing care.
+
+#### Respiratory nursing
+
+- Respiratory assessment and diagnostics.
+- Asthma and status asthmaticus.
+- COPD, emphysema, and chronic bronchitis.
+- Pneumonia and tuberculosis.
+- Pulmonary edema and respiratory failure.
+- Acute respiratory distress syndrome.
+- Pneumothorax and pleural disorders.
+- Pulmonary embolism.
+- Oxygen therapy and airway management.
+- Mechanical ventilation principles.
+- Tracheostomy and chest tube care.
+- Respiratory medications and ABG interpretation.
+
+#### Neurological nursing
+
+- Neurological assessment and Glasgow Coma Scale.
+- Stroke and transient ischemic attack.
+- Increased intracranial pressure.
+- Seizures and status epilepticus.
+- Meningitis and encephalitis.
+- Traumatic brain injury.
+- Spinal cord injury.
+- Parkinson disease and Alzheimer disease.
+- Multiple sclerosis and myasthenia gravis.
+- Guillain-Barré syndrome.
+- Neurological surgery and rehabilitation.
+- Cerebral perfusion and neurovascular monitoring.
+
+#### Gastrointestinal and hepatobiliary nursing
+
+- Gastroesophageal reflux and peptic ulcer disease.
+- Gastritis and gastrointestinal bleeding.
+- Appendicitis and peritonitis.
+- Bowel obstruction and inflammatory bowel disease.
+- Crohn disease and ulcerative colitis.
+- Diverticular disease.
+- Pancreatitis and gallbladder disorders.
+- Hepatitis, cirrhosis, and liver failure.
+- Ascites and hepatic encephalopathy.
+- Ostomy care and nutritional support.
+- Gastrointestinal cancers and postoperative care.
+
+#### Renal and urinary nursing
+
+- Acute kidney injury and chronic kidney disease.
+- Glomerulonephritis and nephrotic syndrome.
+- Urinary tract infection and pyelonephritis.
+- Kidney stones and urinary obstruction.
+- Benign prostatic hyperplasia.
+- Dialysis and hemodialysis complications.
+- Peritoneal dialysis.
+- Renal transplantation.
+- Electrolyte imbalances related to renal disease.
+- Urinary diversion and catheter care.
+
+#### Endocrine and metabolic nursing
+
+- Diabetes mellitus and diabetic emergencies.
+- Diabetic ketoacidosis and hyperosmolar hyperglycemic state.
+- Hypoglycemia management.
+- Thyroid disorders and thyroid storm.
+- Myxedema coma.
+- Hyperparathyroidism and hypoparathyroidism.
+- Adrenal insufficiency and Cushing syndrome.
+- Addisonian crisis.
+- Pituitary disorders.
+- Metabolic syndrome and obesity.
+- Endocrine medication management.
+
+#### Hematologic and oncologic nursing
+
+- Anemia and iron deficiency.
+- Sickle cell disease and thalassemia.
+- Leukemia, lymphoma, and multiple myeloma.
+- Thrombocytopenia and coagulation disorders.
+- Disseminated intravascular coagulation.
+- Neutropenia and bleeding precautions.
+- Cancer staging and treatment.
+- Chemotherapy and radiation therapy.
+- Oncologic emergencies.
+- Extravasation and chemotherapy safety.
+- Palliative care and symptom management.
+
+#### Musculoskeletal nursing
+
+- Fractures and fracture complications.
+- Cast care and traction.
+- Compartment syndrome.
+- Osteoporosis and osteoarthritis.
+- Rheumatoid arthritis and gout.
+- Amputation care.
+- Joint replacement and postoperative care.
+- Spinal disorders and mobility rehabilitation.
+
+#### Other medical-surgical areas
+
+- Burns and burn management.
+- Wound healing and pressure injuries.
+- Skin disorders and wound infections.
+- Eye and ear disorders.
+- Sepsis and septic shock.
+- Fluid, electrolyte, and acid-base imbalances.
+- Arterial blood gas interpretation.
+- Emergency nursing and triage.
+- Trauma and multiple-system injury.
+- Perioperative nursing.
+- Transplant care and immunosuppression.
+- Pain management.
+- Geriatric nursing and common age-related disorders.
+- Palliative and end-of-life care.
+
+### SUBJECT 5: PSYCHIATRIC AND MENTAL HEALTH NURSING
+
+Cover:
+
+- Foundations and principles of psychiatric nursing.
+- Mental health assessment and the mental status examination.
+- Therapeutic communication and therapeutic relationships.
+- Mental health history and psychosocial assessment.
+- Psychiatric nursing process and care planning.
+- Anxiety disorders, panic disorder, and phobias.
+- Depression and bipolar disorder.
+- Schizophrenia and other psychotic disorders.
+- Personality disorders.
+- Obsessive-compulsive and trauma-related disorders.
+- Post-traumatic stress disorder.
+- Somatic symptom and dissociative disorders.
+- Eating disorders.
+- Substance use and withdrawal.
+- Alcohol and drug intoxication.
+- Suicide risk assessment and precautions.
+- Crisis intervention and de-escalation.
+- Aggression management and patient safety.
+- Psychiatric medications and major adverse effects.
+- Antidepressants, antipsychotics, mood stabilizers, and anxiolytics.
+- Lithium toxicity and medication monitoring.
+- Extrapyramidal symptoms and neuroleptic malignant syndrome.
+- Electroconvulsive therapy and other treatment modalities.
+- Sleep disorders.
+- Cognitive disorders, delirium, and dementia.
+- Grief, loss, and end-of-life mental health.
+- Child and adolescent mental health.
+- Older adult psychiatric concerns.
+- Psychiatric emergencies.
+- Patient rights, consent, confidentiality, and ethical responsibilities.
+- Mental health rehabilitation and relapse prevention.
+
+### SUBJECT 6: NURSING LEADERSHIP, MANAGEMENT, ETHICS, AND JURISPRUDENCE
+
+Cover:
+
+- Leadership styles and leadership theories.
+- Management functions and organizational structures.
+- Staffing, scheduling, and workload management.
+- Delegation and supervision.
+- Assignment according to competence and scope of practice.
+- Prioritization of patient care.
+- Conflict resolution and negotiation.
+- Teamwork and interprofessional collaboration.
+- Quality assurance and continuous quality improvement.
+- Patient safety indicators and risk management.
+- Clinical audits and performance evaluation.
+- Incident reporting and root-cause analysis.
+- Nursing informatics and health information systems.
+- Disaster leadership and emergency management.
+- Ethical principles and ethical decision-making.
+- Autonomy, beneficence, nonmaleficence, and justice.
+- Informed consent and patient confidentiality.
+- Patient rights and professional boundaries.
+- Negligence, malpractice, and professional accountability.
+- Nursing documentation and legal records.
+- Philippine nursing laws, including Republic Act No. 9173.
+- Applicable professional regulations and the current Code of Ethics for Registered Nurses in the Philippines.
+- Professional licensure, registration, and continuing professional development.
+- Scope of practice and professional standards.
+- Research ethics and protection of human participants.
+- Relevant Philippine health laws and regulations.
+
+Verify current legal provisions and professional rules against authoritative sources before including them in the answer key.
+
+### SUBJECT 7: NURSING RESEARCH AND EVIDENCE-BASED PRACTICE
+
+Cover:
+
+- Research fundamentals and scientific inquiry.
+- Quantitative and qualitative research.
+- Research designs and methodologies.
+- Independent and dependent variables.
+- Population, sample, and sampling methods.
+- Research questions, objectives, and hypotheses.
+- Literature review and conceptual frameworks.
+- Validity, reliability, and research bias.
+- Data collection methods and research instruments.
+- Descriptive and inferential statistics.
+- Mean, median, mode, and standard deviation.
+- Probability, normal distribution, and confidence intervals.
+- P-values and statistical significance.
+- Correlation and regression fundamentals.
+- Sensitivity, specificity, predictive values, and diagnostic testing.
+- Evidence hierarchies and critical appraisal.
+- Evidence-based nursing practice.
+- Research ethics and informed consent.
+- Research findings and clinical application.
+- Nursing research utilization and quality improvement.
+
+### SUBJECT 8: GENERAL NURSING COMPETENCIES AND INTEGRATED CLINICAL JUDGMENT
+
+Integrate questions that combine two or more nursing subject areas.
+
+Cover:
+
+- Prioritizing unstable patients.
+- ABCs and immediate life threats.
+- Acute versus chronic conditions.
+- Nursing process and clinical judgment.
+- Recognition of clinical deterioration.
+- Medication calculations and safe administration.
+- Interpreting laboratory results and diagnostic findings.
+- Clinical decision-making and nursing interventions.
+- Delegation and assignment.
+- Patient education and discharge planning.
+- Infection prevention.
+- Patient safety and error prevention.
+- Emergency response and rapid assessment.
+- Evidence-based interventions.
+- Ethical dilemmas.
+- Cultural sensitivity and professional communication.
+- Identifying expected versus unexpected findings.
+- Selecting the safest and most appropriate nursing action.
+
+## 5. EXACT 500-QUESTION BLUEPRINT
+
+Create a configurable examination blueprint that totals exactly 500 questions.
+
+Use the latest verified official examination framework to guide the final allocation. If an authoritative current blueprint is available, prioritize its coverage structure over the illustrative allocation below.
+
+For an initial practice bank, use the following provisional distribution:
+
+| Major area | Number of questions |
+|---|---:|
+| Fundamentals of Nursing | 50 |
+| Community Health Nursing | 65 |
+| Maternal and Child Health Nursing | 75 |
+| Medical-Surgical Nursing | 145 |
+| Psychiatric and Mental Health Nursing | 45 |
+| Leadership, Management, Ethics, and Jurisprudence | 45 |
+| Nursing Research and Evidence-Based Practice | 25 |
+| Integrated Clinical Judgment | 50 |
+| **TOTAL** | **500** |
+
+These figures are an initial design allocation, not a claim that they reproduce the official PNLE distribution. The application must allow the administrator to configure the blueprint.
+
+The question-selection algorithm must enforce the required total before an examination starts.
+
+Do not simply generate 500 questions from a single subject or repeatedly reuse a small set of questions to reach the required total.
+
+## 6. QUESTION BANK AND QUESTION QUALITY
+
+Build a structured, searchable question bank.
+
+Every question must contain:
+
+- Unique question ID.
+- Subject and subtopic.
+- Learning objective.
+- Difficulty level: Easy, Moderate, or Difficult.
+- Question text.
+- Four answer options.
+- Correct answer identifier.
+- Detailed rationale explaining the correct answer.
+- Explanations of why the other options are less appropriate, when useful.
+- Reference or source for factual verification when available.
+- Question type and clinical scenario metadata.
+- Concept ID linking equivalent questions that test the same learning objective.
+
+Include different question styles:
+
+1. Direct knowledge questions.
+2. Patient case scenarios.
+3. Prioritization questions.
+4. Application and analysis questions.
+5. Clinical judgment questions.
+6. Medication calculation questions.
+7. Laboratory interpretation questions.
+8. Nursing intervention questions.
+9. Patient safety questions.
+10. Delegation and ethical decision-making questions.
+
+Use clinically accurate, educationally meaningful questions. Avoid ambiguous wording, trick questions without educational value, duplicate questions, unsupported claims, outdated recommendations, and answer choices with multiple equally correct answers.
+
+Verify answer keys and rationales against authoritative nursing textbooks, current clinical guidelines, applicable Philippine laws, and reliable health authorities.
+
+Do not invent references or falsely claim a question has been verified.
+
+## 7. RETAKE EXAMINATION WITH DIFFERENT QUESTIONS
+
+The Retake Examination feature is mandatory.
+
+After the student completes an examination, display a prominent Retake Examination button.
+
+When the student clicks it:
+
+1. Ask for confirmation before discarding the current results view or beginning a new attempt.
+2. Create a new examination attempt with a new unique attempt ID.
+3. Generate exactly 500 questions.
+4. Prefer questions that were not included in the student's immediately preceding attempt.
+5. Preserve the same examination blueprint, subject distribution, learning objectives, and difficulty distribution.
+6. Select alternate questions from the same concept groups.
+7. Keep the same intended correct answer for equivalent question variants, even if the answer letter changes.
+8. Randomize question order and answer-option order where appropriate.
+9. Recalculate the correct answer identifier after answer options are shuffled.
+10. Prevent duplicate questions within the new attempt.
+11. Save the new attempt separately from the previous attempt.
+12. Keep previous results available in examination history.
+
+### Important retake logic
+
+Different questions must test the same concepts, not merely repeat the exact same sentence with a few words changed.
+
+For example:
+
+Original concept: The nurse must immediately assess airway patency when a patient shows signs of airway obstruction.
+
+Retake variant: A patient develops stridor and difficulty speaking after a procedure. Which nursing action takes priority?
+
+The variant should test the same underlying clinical principle and have a verified answer key.
+
+For questions that use numeric values, laboratory findings, medication calculations, or patient scenarios, create validated variants with correctly recalculated answers.
+
+**Do not force the same answer letter across different questions.** Preserve the correct clinical answer or learning objective, not necessarily the letter A, B, C, or D.
+
+If a concept has several valid equivalent questions, select an unused variant. If the bank does not have enough unused variants, clearly disclose that some questions may repeat rather than falsely claiming all 500 are new.
+
+Do not start a new attempt until the system has successfully selected and validated all 500 questions.
+
+## 8. EXAMINATION INTERFACE
+
+Design a clean, modern, minimalist interface.
+
+### Visual design
+
+Use:
+
+- Soft off-white or very light gray background.
+- Muted navy, teal, or sage-green accents.
+- Dark, readable text.
+- Comfortable spacing and generous margins.
+- Rounded cards with subtle borders.
+- Clear typography.
+- Small, consistent icons.
+- Subtle transitions.
+- Minimal shadows.
+- No distracting animations or unnecessary decorations.
+- No excessive gradients, bright colors, or flashing elements.
+
+The application should feel calm, professional, organized, and easy on the eyes.
+
+Include a light/dark mode toggle if it can be implemented accessibly.
+
+### Main examination screen
+
+The layout should contain:
+
+**Top navigation bar**
+- Application logo or title.
+- Student name.
+- Examination title.
+- Remaining time.
+- Save status.
+
+**Main question panel**
+- Question number.
+- Subject and topic label.
+- Question text.
+- Four selectable answer cards.
+- Previous button.
+- Next button.
+- Mark for Review button.
+- Clear Answer button.
+- Submit Examination button.
+
+**Question navigator**
+- Numbered grid from 1 to 500.
+- Color or icon indicators for answered, unanswered, flagged, and current questions.
+- A clear legend.
+- A way to jump to any question.
+
+On smaller screens, move the question navigator into a collapsible drawer.
+
+Ensure text remains readable on desktop, tablets, and mobile devices.
+
+## 9. DASHBOARD
+
+Create a student dashboard with:
+
+- Welcome message.
+- Start New Examination button.
+- Continue Examination button when an unfinished attempt exists.
+- Latest examination score.
+- Average score.
+- Highest score.
+- Number of completed attempts.
+- Subject performance chart.
+- Recent examination history.
+- Retake Examination shortcut.
+- Review Incorrect Answers shortcut.
+
+Display charts using Chart.js, with readable labels and accessible colors.
+
+Do not display fabricated statistics. Show empty states when the student has no completed examinations.
+
+## 10. AUTOMATIC SCORING AND RESULTS PAGE
+
+When the student submits the examination, calculate the score from the saved answer key on the server.
+
+Display:
+
+- Total questions: 500.
+- Correct answers.
+- Incorrect answers.
+- Unanswered questions.
+- Raw score out of 500.
+- Percentage score.
+- Practice benchmark status.
+- Subject-by-subject performance.
+- Time spent.
+- Number of attempted questions.
+- Examination date and attempt number.
+
+Calculate the raw score as:
+
+`Raw Score = Number of Correct Answers`
+
+Calculate the percentage as:
+
+`Percentage = (Correct Answers / 500) × 100`
+
+Count unanswered questions as not correct for the raw score.
+
+For example, if a student answers 375 questions correctly:
+
+- Correct: 375.
+- Incorrect or unanswered: 125.
+- Raw score: 375/500.
+- Percentage: 75%.
+
+Label any pass/fail indicator as a practice benchmark, not an official prediction of licensure.
+
+### Results review
+
+Provide tabs or sections for:
+
+1. Overall Summary.
+2. Subject Performance.
+3. Correct Answers.
+4. Incorrect Answers.
+5. Unanswered Questions.
+6. Full Answer Review.
+7. Detailed Rationales.
+
+For each reviewed question, display the student's selected answer, the correct answer, and the explanation.
+
+Allow students to filter questions by subject, correctness, and flagged status.
+
+Include buttons for:
+
+- Retake Examination.
+- Review Incorrect Answers.
+- Return to Dashboard.
+- Print Results.
+- Export Results as PDF, if supported by the installed libraries.
+- View Previous Attempts.
+
+Never reveal correct answers or rationales during an active examination unless the student is explicitly using a separate practice mode designed to provide immediate feedback.
+
+## 11. LEARNING AND REVIEW MODE
+
+In addition to full examination mode, implement a separate study mode.
+
+Study mode must allow students to:
+
+- Select a nursing subject.
+- Select a subtopic.
+- Choose question difficulty.
+- Practice a selected number of questions.
+- View the correct answer after answering.
+- Read detailed rationales.
+- Bookmark difficult questions.
+- Review previously incorrect questions.
+- Retry questions until answered correctly.
+
+Keep study mode separate from the 500-item examination mode so that study questions do not accidentally change examination scores.
+
+## 12. DATABASE DESIGN
+
+Create a complete SQL database schema with appropriate primary keys, foreign keys, indexes, constraints, and timestamps.
+
+Include at least these tables:
+
+### users
+- id
+- full_name
+- email
+- password_hash
+- role
+- created_at
+- updated_at
+
+### subjects
+- id
+- subject_name
+- description
+- is_active
+
+### topics
+- id
+- subject_id
+- topic_name
+- description
+- learning_objective
+
+### concepts
+- id
+- topic_id
+- concept_name
+- concept_description
+
+### questions
+- id
+- concept_id
+- subject_id
+- topic_id
+- question_text
+- option_a
+- option_b
+- option_c
+- option_d
+- correct_option
+- rationale
+- difficulty
+- reference_text
+- is_active
+- created_at
+- updated_at
+
+### question_variants
+- id
+- concept_id
+- question_id
+- variant_group_id
+- validation_status
+
+### examination_attempts
+- id
+- user_id
+- attempt_number
+- total_questions
+- correct_count
+- incorrect_count
+- unanswered_count
+- percentage
+- started_at
+- submitted_at
+- duration_seconds
+- status
+
+### attempt_questions
+- id
+- attempt_id
+- question_id
+- question_order
+- selected_option
+- is_flagged
+- is_answered
+
+### bookmarks
+- id
+- user_id
+- question_id
+- created_at
+
+### study_history
+- id
+- user_id
+- question_id
+- selected_option
+- was_correct
+- practiced_at
+
+### audit_logs
+- id
+- user_id
+- action
+- created_at
+
+Add additional tables when needed for examination blueprints, subject weights, variant validation, and attempt-level snapshots.
+
+Ensure the schema supports preserving historical examination results even if a question is edited later. Store the question text, options, and correct answer as immutable attempt snapshots, or implement equivalent versioning.
+
+## 13. AUTHENTICATION AND SECURITY
+
+Implement:
+
+- Student registration.
+- Secure login and logout.
+- Password hashing using PHP password_hash().
+- Password verification using password_verify().
+- Session regeneration after login.
+- Server-side authorization checks.
+- CSRF protection for state-changing requests.
+- PDO prepared statements.
+- Input validation and output escaping.
+- Protection against SQL injection and cross-site scripting.
+- Secure session cookie settings.
+- Rate limiting for login attempts where practical.
+- Secure handling of examination submissions.
+- Protection against unauthorized access to other students' results.
+
+Do not hardcode production passwords or expose database credentials in frontend JavaScript.
+
+If administrator functions are included, protect them with role-based access control.
+
+## 14. ADMINISTRATION PANEL
+
+Provide an optional administrator dashboard for managing the learning content.
+
+Administrators must be able to:
+
+- Add, edit, archive, and review questions.
+- Organize questions by subject, topic, and concept.
+- Create equivalent question variants.
+- Set difficulty levels.
+- Review answer keys and rationales.
+- Import questions from validated CSV or JSON files.
+- Export the question bank.
+- Manage the examination blueprint.
+- Check the number of active questions.
+- Detect duplicate or incomplete questions.
+- Validate that each question has four options and exactly one intended correct answer.
+- Review unverified questions.
+- View aggregate practice-system statistics without exposing unnecessary student information.
+
+Do not allow an ordinary student to access administrator pages or modify the answer key.
+
+## 15. QUESTION BANK COMPLETENESS AND VALIDATION
+
+Do not treat a list of topics as a completed question bank.
+
+Create actual question records with answer options, correct answers, rationales, and topic assignments.
+
+The application must validate the available question bank before allowing a full examination to start.
+
+For a 500-question examination, verify that:
+
+- Exactly 500 questions can be selected.
+- All required subject quotas can be satisfied.
+- Each question is active and has a valid answer key.
+- No question appears twice in one attempt.
+- Required subject allocations are respected.
+- Question variants are properly associated with their learning objectives.
+- Every question has four answer choices.
+- All answer references remain valid after option randomization.
+
+For a retake, verify that the new examination contains 500 valid questions and prioritizes unused equivalent variants.
+
+If the available bank cannot satisfy these requirements, show a clear administrative error identifying the missing subject coverage or insufficient question variants. Never silently fill the exam with duplicates or fabricated questions.
+
+## 16. SAMPLE DATA AND INITIAL CONTENT
+
+Provide:
+
+- A complete SQL schema.
+- A seed file with initial subjects and topics.
+- A properly formatted question-import template.
+- A representative set of fully written sample questions with validated answer keys and rationales.
+- Example question variants for retake testing.
+- A README explaining how to add the remaining question bank.
+
+The application must clearly distinguish sample or unverified questions from reviewed questions.
+
+Do not label a partial sample question bank as a complete 500-question educational bank.
+
+For a genuinely comprehensive release, populate the database with at least 500 validated, unique question records before advertising that the full examination is ready. To support different retakes, provide additional equivalent variants across the same concepts and learning objectives.
+
+## 17. PROJECT FILE STRUCTURE
+
+Organize the source code cleanly, for example:
+
+nursing-preboard/
+- index.php
+- login.php
+- register.php
+- logout.php
+- dashboard.php
+- exam.php
+- submit_exam.php
+- results.php
+- review_answers.php
+- history.php
+- study_mode.php
+- bookmarks.php
+- config/
+  - database.php
+  - app.php
+- includes/
+  - auth.php
+  - functions.php
+  - csrf.php
+  - header.php
+  - footer.php
+- api/
+  - start_exam.php
+  - get_question.php
+  - save_answer.php
+  - flag_question.php
+  - submit_exam.php
+  - get_results.php
+- admin/
+  - index.php
+  - subjects.php
+  - topics.php
+  - questions.php
+  - question_variants.php
+  - blueprint.php
+  - import_questions.php
+  - reports.php
+- assets/
+  - css/
+    - style.css
+    - exam.css
+  - js/
+    - app.js
+    - exam.js
+    - results.js
+  - vendor/
+- database/
+  - schema.sql
+  - seed.sql
+  - question_import_template.csv
+- README.md
+
+You may improve this structure as needed, but keep the project maintainable and suitable for XAMPP.
+
+## 18. ERROR HANDLING AND RELIABILITY
+
+Handle these situations correctly:
+
+- Database connection failure.
+- Invalid login.
+- Duplicate email registration.
+- Expired session.
+- Browser refresh during an examination.
+- Accidental navigation away from the exam.
+- Network or save failure.
+- Duplicate answer submissions.
+- Timer expiration.
+- Empty or invalid answers.
+- Missing or corrupted question records.
+- Insufficient questions for a full exam.
+- Retake generation failure.
+- PDF export failure.
+- Unauthorized access attempts.
+
+Use transactions when creating an examination and submitting answers so partial failures do not corrupt results.
+
+Autosave answers to the server and show a visible save status. If saving fails, alert the student and provide a safe retry mechanism.
+
+Prevent double scoring and duplicate submissions by making submission idempotent.
+
+The server, not the browser, must be the source of truth for scoring, the correct answers, attempt status, and the official remaining time.
+
+## 19. TESTING REQUIREMENTS
+
+Before declaring the project complete, run and document tests for:
+
+1. Student registration and login.
+2. Correct password hashing and authentication.
+3. Creation of an examination with exactly 500 questions.
+4. Correct subject distribution.
+5. Navigation between questions.
+6. Answer selection and answer changes.
+7. Answer persistence after refresh.
+8. Flagging and unflagging questions.
+9. Correct countdown and automatic submission.
+10. Accurate scoring for correct, incorrect, and unanswered items.
+11. Correct percentage calculation.
+12. Correct display of rationales after submission.
+13. Retake generation with 500 questions.
+14. Retake variants testing the same concepts.
+15. Prevention of duplicate questions within one attempt.
+16. Preservation of previous results.
+17. Security against unauthorized result access.
+18. Mobile responsiveness.
+19. CSV question import and validation.
+20. Recovery from database or saving errors.
+
+Create automated tests for the scoring algorithm, examination generator, retake selection, and question-bank validation wherever practical.
+
+## 20. FINAL DELIVERABLES
+
+Deliver a complete, working project containing:
+
+- All PHP, HTML, CSS, and JavaScript files.
+- SQL database schema and seed files.
+- A complete question-bank structure.
+- Actual validated nursing examination questions.
+- Correct answer keys and rationales.
+- Equivalent question variants for retakes.
+- Student authentication.
+- The 500-item examination engine.
+- Timer and autosave functionality.
+- Automatic scoring.
+- Results dashboard and performance charts.
+- Examination history.
+- Study mode.
+- Question bookmarks.
+- Administration and question-import tools.
+- Setup instructions for XAMPP.
+- Test instructions and documented test results.
+
+If the environment supports file creation, package the complete project into a ZIP file that can be extracted directly into `htdocs`.
+
+Include clear instructions for importing the database through phpMyAdmin and configuring the local database connection.
+
+Do not claim a feature works unless it has actually been implemented and tested.
+
+Do not provide only pseudocode, mockups, placeholder pages, incomplete modules, or a list of suggested files.
+
+If the entire project cannot be generated in one response, build it in logical stages while preserving a consistent database schema, file structure, and integration plan. Do not describe the project as complete until all required components are implemented and the core tests pass.
+
+## FINAL ACCEPTANCE CRITERIA
+
+The project is complete only when:
+
+- Every full examination contains exactly 500 items.
+- Students can answer, navigate, save, and submit all questions.
+- The server calculates the score correctly.
+- Results appear immediately after successful submission.
+- Students can review answers and rationales.
+- Retakes contain different questions whenever sufficient equivalent variants are available.
+- Retakes preserve the learning objectives and examination blueprint.
+- Previous results remain accessible.
+- The application covers all listed nursing subject areas through actual question records.
+- The user interface is clean, responsive, and eye-friendly.
+- The database, backend, and frontend work together.
+- The project runs on XAMPP using the provided instructions.
+- Security and automated tests pass.
+- No essential feature is represented by a nonfunctional placeholder.
+
+Build the actual application, not just a visual demonstration. Prioritize correctness, educational value, maintainability, usability, and reliable examination behavior.
